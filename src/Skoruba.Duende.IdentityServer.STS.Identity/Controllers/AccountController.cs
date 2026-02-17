@@ -427,14 +427,16 @@ namespace Skoruba.Duende.IdentityServer.STS.Identity.Controllers
 
                 if (user == null || string.IsNullOrWhiteSpace(user.PhoneNumber))
                 {
+                    _logger.LogError("Cannot retrieve user");
                     // Don't reveal that the user does not exist
                     return View("ForgotPasswordConfirmation");
                 }
 
                 var code = await _userManager.GeneratePasswordResetTokenAsync(user);
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code }, HttpContext.Request.Scheme);                
+                var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code }, HttpContext.Request.Scheme);
 
+                _logger.LogInformation("Sending SMS to {0}", user.PhoneNumber);
                 await _smsSender.SendSMSAsync(user.PhoneNumber, callbackUrl);
                 return View("ForgotPasswordConfirmation");
             }
